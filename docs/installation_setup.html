@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HenryOS - Installation/Setup (UEFI Laptop)</title>
+    <style type="text/css">
+      body {
+        margin: 40px auto;
+        max-width: 650px;
+        line-height: 1.6;
+        font-size: 18px;
+        padding: 0 10px;
+        color: #c5c8c6;
+        background-color: #1d1f21;
+        font-family: 'DejaVu Sans', 'Liberation Sans', sans-serif
+      } h1, h2, h3 {
+        line-height: 1.2;
+        font-family: 'DejaVu Sans', 'Liberation Sans', sans-serif
+      } b, pre {
+        font-family: monospace;
+        font-weight: normal;
+        font-size: 14px;
+      } h1, h2 {
+        border-bottom: 1px solid #929593
+      } a:link {
+        color: #81a2be
+      } a:visited {
+        color: #682a9b
+      }
+    </style>
+    <link rel="stylesheet" href="css/highlight.css">
+  </head>
+  <body>
+   <h1>Installation/Setup (UEFI Laptop)</h1>
+
+   <p>
+   This guide describes the installation/setup process for my current only system, MarshallJCM900. Future guides will be more generic/informative and give more in depth explanations for users who wish to follow this guide for their own system
+   <p>
+
+   <h2>Setting up the installation environment</h2>
+
+   <p>
+   Login as the user <b>nixos</b>.
+   Set your keyboard layout if you are using one other than the default. Example for the DVORAK keyboard layout:
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>sudo<span class="w"> </span>loadkeys<span class="w"> </span>dvorak
+</pre></div>
+
+   <p>
+   Set a password for the user <b>nixos</b>. Then set a root password.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>passwd
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>sudo<span class="w"> </span>passwd
+</pre></div>
+
+   <p>
+   Connect to a network.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>nmtui
+</pre></div>
+
+   <h2>Install over SSH (optional)</h2>
+
+   <p>
+   If you would like to connect via ssh from different machine, identify the IP address of this machine (the one you are installing to):
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>ip<span class="w"> </span>a
+</pre></div>
+
+   <p>
+   Connect from the other machine using the IP address of the machine you are installing to.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>ssh<span class="w"> </span></span>nixos@&lt;<i>ip</i>&gt;
+</pre></div>
+
+   <h2>Preparing the disk</h2>
+
+   <p>
+   Become <b>root</b> user.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>su<span class="w"> </span></span>root
+</pre></div>
+
+   <p>
+   Identify drive on which you would like to install, then begin editing the drive in </b>parted</b> (replace <b>nvme0n1</b> with the drive)
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>lsblk
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>parted<span class="w"> </span>/dev/nvme0n1
+</pre></div>
+
+   <p>
+   In <b>parted</b>, create a GPT partition table.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">(parted)</span><span class="w"> </span>mklabel<span class="w"> </span>gpt
+</pre></div>
+
+   <p>
+   Create the ESP (boot) partition, and activate it:
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">(parted)</span><span class="w"> </span>mkpart<span class="w"> </span>ESP<span class="w"> </span>fat32<span class="w"> </span>1MiB<span class="w"> </span>1025MiB
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">(parted)</span><span class="w"> </span>set<span class="w"> </span>1<span class="w"> </span>esp<span class="w"> </span>on
+</pre></div>
+
+   <p>
+   Create the swap partition. Use amount of RAM (or future amount of RAM) in machine instead of 32GiB.
+   </p>
+
+
+<div class="highlight"><pre><span></span><span class="gp">(parted)</span><span class="w"> </span>mkpart<span class="w"> </span>primary<span class="w"> </span>1025MiB<span class="w"> </span>-32GiB
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">(parted)</span><span class="w"> </span>mkpart<span class="w"> </span>primary<span class="w"> </span>linux-swap<span class="w"> </span>-32GiB<span class="w"> </span>100%
+</pre></div>
+
+   <p>
+   Quit parted.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">(parted)</span><span class="w"> </span>quit
+</pre></div>
+
+   <h2>Setting up encryption</h2>
+   
+   <p>
+   Setup encryption on your root partition, and create a LUKS passphrase. Replace <b>/dev/nvme0n1p2</b> with the name of the second (root) partition. This can be found by running <b>lsblk</b>.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>cryptsetup<span class="w"> </span>luksFormat<span class="w"> </span>/dev/nvme0n1p2
+</pre></div>
+
+   <p>
+   Open the encrypted device.
+   </p>
+   
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>cryptsetup<span class="w"> </span>open<span class="w"> </span>/dev/nvme0n1p2<span class="w"> </span>cryptroot
+</pre></div>
+
+   <h2>Create/setup/mount filesystems</h2>
+
+   <p>
+   Create filesystem for ESP (boot) partition.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mkfs.fat<span class="w"> </span>-F<span class="w"> </span><span class="m">32</span><span class="w"> </span>-n<span class="w"> </span>boot<span class="w"> </span>/dev/nvme0n1p1<span class="w"> </span>
+</pre></div>
+
+   <p>
+   Create a BTRFS filesystem for the root partition.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mkfs.btrfs<span class="w"> </span>-L<span class="w"> </span>nixos<span class="w"> </span>/dev/mapper/cryptroot
+</pre></div>
+
+   <p>
+   Initialize the swap partition and activate it.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mkswap<span class="w"> </span>-L<span class="w"> </span>swap<span class="w"> </span>/dev/nvme0n1p3
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>swapon<span class="w"> </span>/dev/nvme0n1p3
+</pre></div>
+
+   <p>
+   Mount the root partition.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mount<span class="w"> </span>/dev/mapper/cryptroot<span class="w"> </span>/mnt
+</pre></div>
+
+   <p>
+   Create BTRFS subvolumes.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>btrfs<span class="w"> </span>subvoume<span class="w"> </span>create<span class="w"> </span>/mnt/@root
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>btrfs<span class="w"> </span>subvoume<span class="w"> </span>create<span class="w"> </span>/mnt/@home
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>btrfs<span class="w"> </span>subvoume<span class="w"> </span>create<span class="w"> </span>/mnt/@nix
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>btrfs<span class="w"> </span>subvoume<span class="w"> </span>create<span class="w"> </span>/mnt/@snapshots
+</pre></div>
+
+   <p>
+   Unmount the root partition and mount the root subvolume.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>umount<span class="w"> </span>/mnt
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mount<span class="w"> </span>-o<span class="w"> </span><span class="nv">subvol</span><span class="o">=</span>@root,compress<span class="o">=</span>zstd<span class="w"> </span>/dev/mapper/cryptroot<span class="w"> </span>/mnt
+</pre></div>
+
+   <p>
+   Create subvolume directories.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/mnt/<span class="o">{</span>home,nix,.snapshots,boot<span class="o">}</span>
+</pre></div>
+
+   <p>
+   Mount the other subvolumes. 
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mount<span class="w"> </span>-o<span class="w"> </span><span class="nv">subvol</span><span class="o">=</span>@home,compress<span class="o">=</span>zstd<span class="w"> </span>/dev/mapper/cryptroot<span class="w"> </span>/mnt/home
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mount<span class="w"> </span>-o<span class="w"> </span><span class="nv">subvol</span><span class="o">=</span>@nix,compress<span class="o">=</span>zstd<span class="w"> </span>/dev/mapper/cryptroot<span class="w"> </span>/mnt/nix
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mount<span class="w"> </span>-o<span class="w"> </span><span class="nv">subvol</span><span class="o">=</span>@snapshots,compress<span class="o">=</span>zstd<span class="w"> </span>/dev/mapper/cryptroot<span class="w"> </span>/mnt/.snapshots
+</pre></div>
+
+   <p>
+   Mount the ESP (boot) partition.
+   </p>
+
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mount<span class="w"> </span>/dev/nvme0n1p1<span class="w"> </span>/mnt/boot
+</pre></div>
+
+   <h2>Creating the config files</h2>
+
+   <p>
+   Generate <b>/etc/nixos/configuration.nix</b> and <b>/etc/nixos/hardware-configuration.nix</b>.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>nixos-generate-config<span class="w"> </span>--root<span class="w"> </span>/mnt
+</pre></div>
+
+   <p>
+   Identify the swap partition UUID.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>lsblk<span class="w"> </span>-f
+</pre></div>
+
+   <p>
+   Open <b>/mnt/etc/nixos/configuration.nix</b> in a text editor
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>vim<span class="w"> </span>/mnt/etc/nixos/configuration.nix
+</pre></div>
+
+   <p>
+   Add these lines (replace <b>3127cd0b-acec-4fc1-a1f7-40bd981933e0</b> with swap partition UUID) inside the main <span class="highlight"><b><span></span><span class="o">{</span><span class="w"> </span>...<span class="w"> </span><span class="o">}</span></b></span> block (enter input mode by pressing <strong>i</strong>):
+   </p>
+
+<div class="highlight"><pre><span></span><span class="c1"># During boot, check this swap partition for a hibernation image and resume from it if present.</span>
+boot.resumeDevice<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/dev/disk/by-uuid/3127cd0b-acec-4fc1-a1f7-40bd981933e0&quot;</span><span class="p">;</span>
+</pre></div>
+
+   <p>
+   Write and quit by pressing <strong>Esc</strong>, <strong>w</strong>, <strong>q</strong>.
+   </p>
+
+   <h2>Installing</h2>
+
+   <p>
+   Verify mount.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>findmnt<span class="w"> </span>-R<span class="w"> </span>/mnt
+</pre></div>
+
+   <p>
+   Install.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>nixos-install
+</pre></div>
+
+   <p>
+   If successful, reboot.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>reboot
+</pre></div>
+
+   <h2>Boot into installed system and create a user, and update</h2>
+
+   <p>
+   Upon startup, enter encryption password. You should enter into a login manager. Open a TTY by pressing <strong>Ctrl</strong> + <strong>Alt</strong> + <strong>F2</strong>. Login as <b>root</b> and create a user password.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>passwd<span class="w"> </span>&lt;<i>user</i>&gt;
+</pre></div>
+
+   <p>
+   Update system.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>sudo<span class="w"> </span>nixos-rebuild<span class="w"> </span>switch
+</pre></div>
+
+   <h2>Create user folders</h2>
+
+<div class="highlight"><pre><span></span><span class="gp">#</span><span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="se">\</span>
+~/src/experiments/<span class="w"> </span><span class="se">\</span>
+~/src/external/<span class="w"> </span><span class="se">\</span>
+~/src/projects/henrycrusher<span class="w"> </span><span class="se">\</span>
+~/Desktop<span class="w"> </span><span class="se">\</span>
+~/Documents<span class="w"> </span><span class="se">\</span>
+~/Downloads<span class="w"> </span><span class="se">\</span>
+~/Music<span class="w"> </span><span class="se">\</span>
+~/Pictures<span class="w"> </span><span class="se">\</span>
+~/Videos<span class="w"> </span><span class="se">\</span>
+~/Public<span class="w"> </span><span class="se">\</span>
+~/Templates<span class="w"> </span><span class="se">\</span>
+~/.local/share/backgrounds
+</pre></div>  
+
+   <h2>Set up Git</h2>
+
+   <p>
+   Login as the user. Press <strong>Ctrl</strong> + <strong>d</strong> to logout of <b>root</b>. Set your identity. Replace <b>YourName</b> and <b>you@example.com</b> with your desired name and email.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.name<span class="w"> </span><span class="s2">&quot;YourName&quot;</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.email<span class="w"> </span><span class="s2">&quot;you@example.com&quot;</span>
+</pre></div>
+
+   <p>
+   Create an SSH key.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;you@example.com&quot;</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>ssh-agent<span class="w"> </span>-s<span class="k">)</span><span class="s2">&quot;</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>ssh-add<span class="w"> </span>~/.ssh/id_ed25519
+</pre></div>
+
+   <p>
+   Copy your public key.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>cat<span class="w"> </span>~/.ssh/id_ed25519
+</pre></div>
+
+   <p>
+   Go to <a href="https://github.com/settings/ssh/new">https://github.com/settings/ssh/new</a>. Title the key the name of your computer. Paste in the key. Create another, but make it a signing key. Then, test your connection.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>ssh<span class="w"> </span>-T<span class="w"> </span>git@github.com
+</pre></div>
+
+   <p>
+   From now on clone with
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:user/repo.git
+</pre></div>
+
+   <p>
+   not HTTPS. Set main as default branch.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>init.defaultBranch<span class="w"> </span>main
+</pre></div>
+
+   <p>
+   Tell Git to use SSH signing.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>gpg.format<span class="w"> </span>ssh
+</pre></div>
+
+   <p>
+   Point Git at your SSH key.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.signingkey<span class="w"> </span>~/.ssh/id_ed25519
+</pre></div>
+
+   <p>
+   Enable signing by default.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>commit.gpgsign<span class="w"> </span><span class="nb">true</span>
+</pre></div>
+
+   <p>
+   Set an editor. Replace <b>vis</b> with your perfered installed editor.
+   </p>
+ 
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>core.editor<span class="w"> </span><span class="s2">&quot;vis&quot;</span>
+</pre></div>
+
+   <p>
+   To edit my repo, clone it.
+   </p>
+
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>~/src/projects/henrycrusher/
+</pre></div>
+<div class="highlight"><pre><span></span><span class="gp">$</span><span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:Shulginer/HenryOS.git
+</pre></div>
+
+  </body>
+</html>
+
+
