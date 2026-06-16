@@ -10,6 +10,10 @@
       ./hardware-configuration.nix
     ];
 
+  ###############
+  # Boot/Kernel #
+  ###############
+
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -26,6 +30,10 @@
   # Enable firmware with a license allowing redistribution.
   hardware.enableRedistributableFirmware = true;
 
+  ####################
+  # Network/Timezone #
+  ####################
+
   networking.hostName = "MarshallJCM900"; # Define your hostname.
 
   # Configure network connections interactively with nmcli or nmtui.
@@ -38,6 +46,10 @@
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
+  ############
+  # Text/TTY #
+  ############
+
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
   console = {
@@ -46,21 +58,34 @@
     useXkbConfig = true; # use xkb.options in tty.
   };
 
+  ###########
+  # Desktop #
+  ###########
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-
-  
-
+  ############
+  # Keyboard #
+  ############
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
     variant = "dvorak";
   };
+
   # services.xserver.xkb.options = "eurosign:e,caps:escape";
+
+  ############
+  # Printing #
+  ############
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
+
+  #########
+  # Audio #
+  #########
 
   # Enable sound.
   # services.pulseaudio.enable = true;
@@ -76,8 +101,16 @@
     #jack.enable = true;
   };
 
+  ############
+  # Touchpad #
+  ############
+
   # Enable touchpad support (enabled default in most desktopManager).
   # services.libinput.enable = true;
+
+  ################
+  # Nix Settings #
+  ################
  
   # Enable garbage collection
   nix.gc = {
@@ -89,6 +122,10 @@
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ]; 	
 
+  ########
+  # User #
+  ########
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.henrycrusher = {
     isNormalUser = true;
@@ -97,6 +134,10 @@
       tree
     ];
   };
+
+  ############
+  # Packages #
+  ############
 
   # programs.firefox.enable = true;
 
@@ -119,6 +160,10 @@
   # };
 
   # List services that you want to enable:
+
+  ############
+  # Services #
+  ############
 
   # Enable periodic SSD TRIM of mounted partitions in background. 
   services.fstrim.enable = true;
