@@ -65,12 +65,6 @@
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-  # Enable foot ternminal
-  programs.foot.enable = true;
-
-  # Enable Hyprland
-  programs.hyprland.enable = true;
-
   # Enable greetd/tuigreet
   services.greetd = {
     enable = true;
@@ -81,6 +75,12 @@
       };
     };
   };
+
+  # Enable Hyprland
+  programs.hyprland.enable = true;
+
+  # Enable foot ternminal
+  programs.foot.enable = true;
 
   ############
   # Keyboard #
