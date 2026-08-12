@@ -166,6 +166,7 @@
     curl
     git
     fastfetch
+    swaybg
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
