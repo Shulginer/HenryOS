@@ -83,6 +83,11 @@
   # Enable foot ternminal
   programs.foot.enable = true;
 
+  # Add fonts
+  fonts.packages = with pkgs; [
+    nerd-fonts.mononoki
+  ];
+
   ############
   # Keyboard #
   ############
