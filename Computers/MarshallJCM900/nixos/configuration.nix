@@ -167,6 +167,8 @@
     git
     fastfetch
     swaybg
+    pavucontrol
+    crosspipe
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
