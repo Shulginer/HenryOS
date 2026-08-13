@@ -1,0 +1,9 @@
+[submodule "Computers/MarshallJCM900/home/config/vis/plugins/vis-dvorak"]
+	path = Computers/MarshallJCM900/home/config/vis/plugins/vis-dvorak
+	url = https://git.disroot.org/oink/vis-dvorak.git
+[submodule "Computers/MarshallJCM900/home/config/vis/plugins/vis-shebang"]
+	path = Computers/MarshallJCM900/home/config/vis/plugins/vis-shebang
+	url = https://github.com/e-zk/vis-shebang.git
+[submodule "Computers/MarshallJCM900/home/config/vis/plugins/vis-title"]
+	path = Computers/MarshallJCM900/home/config/vis/plugins/vis-title
+	url = https://github.com/erf/vis-title.git
